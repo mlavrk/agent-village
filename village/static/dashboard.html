@@ -1,0 +1,327 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Agent Village</title>
+<style>
+  :root {
+    --bg: #0f1216; --panel: #171b21; --line: #262c35; --text: #e6e9ee;
+    --dim: #8c95a3; --accent: #d8a657; --mafia: #d05a5a; --town: #6aab7c;
+    --think: #5b8fd6;
+  }
+  * { box-sizing: border-box; }
+  body {
+    margin: 0; background: var(--bg); color: var(--text);
+    font: 14px/1.5 -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+    transition: background .8s ease;
+  }
+  body.night { background: #0b0e14; }
+  body.day   { background: #14171c; }
+  body.over  { background: #120f0f; }
+
+  header {
+    display: flex; align-items: center; gap: 16px; flex-wrap: wrap;
+    padding: 12px 18px; border-bottom: 1px solid var(--line); background: var(--panel);
+    position: sticky; top: 0; z-index: 5;
+  }
+  h1 { font-size: 15px; margin: 0; letter-spacing: .04em; font-weight: 600; }
+  .chip {
+    padding: 3px 10px; border: 1px solid var(--line); border-radius: 999px;
+    font-size: 12px; color: var(--dim);
+  }
+  .chip b { color: var(--text); font-weight: 600; }
+  .phase-night { border-color: #35406a; color: #9fb0e8; }
+  .phase-day   { border-color: #6b5a2c; color: var(--accent); }
+  .phase-vote  { border-color: #6b3a3a; color: #e08f8f; }
+  .phase-over  { border-color: #6b3a3a; color: #ffb3b3; }
+  .spacer { flex: 1; }
+  button {
+    background: transparent; color: var(--dim); border: 1px solid var(--line);
+    border-radius: 6px; padding: 4px 10px; cursor: pointer; font-size: 12px;
+  }
+  button:hover { color: var(--text); border-color: var(--dim); }
+  #conn.on  { color: var(--town); }
+  #conn.off { color: var(--mafia); }
+
+  main {
+    display: grid; grid-template-columns: 300px minmax(0,1fr) 320px;
+    gap: 14px; padding: 14px; align-items: start;
+  }
+  @media (max-width: 1100px) { main { grid-template-columns: 1fr; } }
+
+  .panel { background: var(--panel); border: 1px solid var(--line); border-radius: 10px; }
+  .panel > h2 {
+    margin: 0; padding: 10px 14px; font-size: 12px; letter-spacing: .08em;
+    text-transform: uppercase; color: var(--dim); border-bottom: 1px solid var(--line);
+  }
+  .scroll { max-height: calc(100vh - 150px); overflow-y: auto; padding: 12px 14px; }
+
+  .agent {
+    display: grid; grid-template-columns: 34px 1fr auto; gap: 10px; align-items: center;
+    padding: 9px 0; border-bottom: 1px solid var(--line);
+  }
+  .agent:last-child { border-bottom: 0; }
+  .ava {
+    width: 34px; height: 34px; border-radius: 50%; display: grid; place-items: center;
+    background: #222833; font-weight: 600; color: var(--dim);
+    border: 2px solid transparent; transition: all .3s;
+  }
+  .agent.thinking .ava { border-color: var(--think); animation: pulse 1.1s infinite; }
+  .agent.speaking .ava { border-color: var(--accent); color: var(--text); }
+  .agent.dead { opacity: .38; }
+  .agent.dead .ava { text-decoration: line-through; }
+  @keyframes pulse { 50% { box-shadow: 0 0 0 5px rgba(91,143,214,.14); } }
+  .nm { font-weight: 600; }
+  .meta { font-size: 11px; color: var(--dim); }
+  .role { font-size: 10px; padding: 1px 6px; border-radius: 4px; margin-left: 6px; }
+  .role.mafia { background: rgba(208,90,90,.18); color: var(--mafia); }
+  .role.town  { background: rgba(106,171,124,.15); color: var(--town); }
+  .tok { font-size: 11px; color: var(--dim); font-variant-numeric: tabular-nums; }
+
+  .msg { padding: 8px 0; border-bottom: 1px solid rgba(255,255,255,.04); animation: in .35s ease; }
+  @keyframes in { from { opacity: 0; transform: translateY(6px); } }
+  .msg .who { font-weight: 600; margin-right: 6px; }
+  .msg.mafia-ch .who { color: var(--mafia); }
+  .msg .thought { display: block; font-size: 12px; color: var(--think); opacity: .85; margin-top: 3px; font-style: italic; }
+  .narr { padding: 10px 0; color: var(--accent); font-style: italic; border-bottom: 1px solid rgba(255,255,255,.04); }
+  .sys  { padding: 6px 0; font-size: 12px; color: var(--dim); }
+  .sys.err { color: var(--mafia); }
+
+  .vote-row { display: grid; grid-template-columns: 90px 1fr 24px; gap: 8px; align-items: center; margin: 5px 0; font-size: 12px; }
+  .bar { height: 8px; background: #222833; border-radius: 4px; overflow: hidden; }
+  .bar span { display: block; height: 100%; background: var(--accent); transition: width .4s; }
+  .divider {
+    margin: 12px 0 6px; padding-top: 8px; border-top: 1px solid var(--line);
+    font-size: 11px; letter-spacing: .08em; text-transform: uppercase; color: var(--dim);
+  }
+  .banner { padding: 16px; text-align: center; font-size: 16px; font-weight: 600; }
+  .banner.mafia { color: var(--mafia); } .banner.town { color: var(--town); }
+</style>
+</head>
+<body>
+<header>
+  <h1>🏘 AGENT VILLAGE</h1>
+  <span class="chip" id="phase">waiting…</span>
+  <span class="chip">tokens <b id="tokens">0</b></span>
+  <span class="chip">calls <b id="calls">0</b></span>
+  <span class="spacer"></span>
+  <span class="chip" id="conn">connecting…</span>
+  <button id="spoil">reveal roles</button>
+</header>
+
+<main>
+  <section class="panel">
+    <h2>Villagers</h2>
+    <div class="scroll" id="agents"></div>
+  </section>
+
+  <section class="panel">
+    <h2>The square</h2>
+    <div class="scroll" id="village"></div>
+  </section>
+
+  <section class="panel">
+    <h2>Private channel · ballots</h2>
+    <div class="scroll">
+      <div id="votes"></div>
+      <div id="mafia"></div>
+    </div>
+  </section>
+</main>
+
+<script>
+const state = { agents: new Map(), spoilers: false, votes: {}, runoff: false, day: 1 };
+const $ = (id) => document.getElementById(id);
+
+$("spoil").onclick = () => {
+  state.spoilers = !state.spoilers;
+  $("spoil").textContent = state.spoilers ? "hide roles" : "reveal roles";
+  renderAgents();
+};
+
+function renderAgents() {
+  const box = $("agents");
+  box.innerHTML = "";
+  for (const a of state.agents.values()) {
+    const el = document.createElement("div");
+    el.className = "agent" + (a.alive ? "" : " dead") + (a.status ? " " + a.status : "");
+    const team = a.role === "mafia" ? "mafia" : "town";
+    const roleTag = (state.spoilers || a.revealed)
+      ? `<span class="role ${team}">${a.role}</span>` : "";
+    el.innerHTML = `
+      <div class="ava">${a.name[0]}</div>
+      <div>
+        <div class="nm">${a.name}${roleTag}</div>
+        <div class="meta">${a.model || ""}${a.status === "thinking" ? " · thinking…" : ""}</div>
+      </div>
+      <div class="tok">${a.tokens || 0}</div>`;
+    el.title = a.persona || "";
+    box.appendChild(el);
+  }
+}
+
+function append(target, node) {
+  const box = $(target);
+  const stick = box.scrollHeight - box.scrollTop - box.clientHeight < 80;
+  box.appendChild(node);
+  if (stick) box.scrollTop = box.scrollHeight;
+}
+
+function divider(target, text) {
+  const node = document.createElement("div");
+  node.className = "divider"; node.textContent = text;
+  append(target, node);
+}
+
+function renderVotes() {
+  const entries = Object.entries(state.votes).sort((a, b) => b[1] - a[1]);
+  const max = Math.max(1, ...entries.map(([, n]) => n));
+  const title = state.runoff ? "run-off" : `vote, day ${state.day || 1}`;
+  $("votes").innerHTML = entries.length
+    ? `<div class='meta' style='margin-bottom:6px'>${title}</div>` + entries.map(([name, n]) =>
+        `<div class="vote-row"><span>${name}</span>
+         <span class="bar"><span style="width:${(n / max) * 100}%"></span></span>
+         <span>${n}</span></div>`).join("")
+    : "";
+}
+
+const handlers = {
+  state(e) {
+    for (const a of e.agents) {
+      const prev = state.agents.get(a.name) || {};
+      state.agents.set(a.name, { ...prev, ...a, status: a.alive ? (prev.status || "") : "" });
+    }
+    $("tokens").textContent = e.usage.total;
+    $("calls").textContent = e.usage.calls;
+    renderAgents();
+  },
+  phase(e) {
+    const label = { night: "🌙 night", dawn: "🌅 dawn", day: "☀️ day",
+                    vote: "⚖️ vote", setup: "setup", over: "finale" }[e.phase] || e.phase;
+    state.day = e.day;
+    $("phase").textContent = `Day ${e.day} · ${label}`;
+    $("phase").className = "chip phase-" + e.phase;
+    document.body.className = e.phase === "night" ? "night" : e.phase === "over" ? "over" : "day";
+    if (e.phase === "vote") { state.votes = {}; state.runoff = false; renderVotes(); }
+    if (e.phase === "night") divider("mafia", `Night ${e.day + 1}`);
+  },
+  thinking(e) {
+    const a = state.agents.get(e.agent); if (!a) return;
+    a.status = "thinking"; renderAgents();
+  },
+  idle(e) {
+    const a = state.agents.get(e.agent); if (!a) return;
+    a.status = ""; renderAgents();
+  },
+  speech(e) {
+    const node = document.createElement("div");
+    node.className = "msg" + (e.channel === "mafia" ? " mafia-ch" : "");
+    node.innerHTML = `<span class="who">${e.agent}</span>${escapeHtml(e.text)}` +
+      (e.thought ? `<span class="thought">${escapeHtml(e.thought)}</span>` : "");
+    append(e.channel === "mafia" ? "mafia" : "village", node);
+    const a = state.agents.get(e.agent);
+    if (a) { a.status = "speaking"; renderAgents(); setTimeout(() => { a.status = ""; renderAgents(); }, 1200); }
+  },
+  narration(e) {
+    const node = document.createElement("div");
+    node.className = "narr"; node.textContent = e.text;
+    append("village", node);
+  },
+  pass(e) {
+    const node = document.createElement("div");
+    node.className = "sys"; node.textContent = `${e.agent} stayed silent.`;
+    append("village", node);
+  },
+  night_action(e) {
+    const icon = { kill_vote: "🗡", heal: "💊" }[e.action] || "•";
+    const verb = { kill_vote: "targets", heal: "heals" }[e.action] || e.action;
+    const who = e.actor === e.target ? "themselves" : e.target;
+    const node = document.createElement("div");
+    node.className = "sys"; node.textContent = `${icon} ${e.actor} ${verb} ${who}`;
+    append("mafia", node);
+  },
+  investigation(e) {
+    const node = document.createElement("div");
+    node.className = "sys";
+    node.textContent = `🔍 ${e.actor} investigated ${e.target}: ${e.is_mafia ? "MAFIA" : "innocent"}`
+      + (e.lost ? " — knowledge lost, the detective died that night" : "");
+    if (e.lost) node.style.opacity = ".6";
+    append("mafia", node);
+  },
+  vote(e) {
+    if (e.runoff && !state.runoff) { state.runoff = true; state.votes = {}; }
+    state.votes[e.target] = (state.votes[e.target] || 0) + 1;
+    renderVotes();
+  },
+  vote_result(e) {
+    const node = document.createElement("div");
+    node.className = "sys";
+    node.textContent = e.lynched ? `⚖️ hanged: ${e.lynched} (${e.role})` : "⚖️ nobody was hanged";
+    append("village", node);
+  },
+  death(e) {
+    const a = state.agents.get(e.agent);
+    if (a) { a.alive = false; a.revealed = true; a.role = e.role; renderAgents(); }
+  },
+  saved(e) {
+    const node = document.createElement("div");
+    node.className = "sys"; node.textContent = `💊 ${e.agent} was saved by the doctor`;
+    append("village", node);
+  },
+  preflight(e) {
+    const node = document.createElement("div");
+    node.className = "sys" + (e.ok ? "" : " err");
+    node.textContent = (e.ok ? "✓ model available: " : "✗ model unavailable: ") + e.model
+      + (e.ok ? "" : ` — ${e.detail}`);
+    append("village", node);
+  },
+  vote_retry(e) {
+    const node = document.createElement("div");
+    node.className = "sys" + (e.ok ? "" : " err"); node.style.opacity = ".75";
+    node.textContent = e.ok
+      ? `🔁 ${e.agent} was asked again and named someone`
+      : `🔁 ${e.agent} never cast a vote`;
+    append("village", node);
+  },
+  truncated(e) {
+    const node = document.createElement("div");
+    node.className = "sys"; node.style.opacity = ".7";
+    node.textContent = `✂️ reply from ${e.agent} (${e.model}) hit the token limit — fields partially recovered`;
+    append("village", node);
+  },
+  error(e) {
+    const node = document.createElement("div");
+    node.className = "sys err"; node.textContent = `⚠️ ${e.agent}: ${e.text}`;
+    append("village", node);
+  },
+  game_over(e) {
+    for (const [name, role] of Object.entries(e.roles)) {
+      const a = state.agents.get(name);
+      if (a) { a.role = role; a.revealed = true; }
+    }
+    renderAgents();
+    const banner = document.createElement("div");
+    const winner = { mafia: "The mafia wins", town: "The village wins",
+                     draw: "Draw — time ran out", budget: "Stopped: token budget spent" }[e.winner];
+    banner.className = "banner " + e.winner;
+    banner.textContent = "🏁 " + winner;
+    append("village", banner);
+  },
+};
+
+function escapeHtml(s) {
+  return String(s).replace(/[&<>]/g, (c) => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;" }[c]));
+}
+
+const source = new EventSource("/events");
+source.onopen = () => { $("conn").textContent = "live"; $("conn").className = "chip on"; };
+source.onerror = () => { $("conn").textContent = "disconnected"; $("conn").className = "chip off"; };
+source.onmessage = (msg) => {
+  const event = JSON.parse(msg.data);
+  const handler = handlers[event.kind];
+  if (handler) handler(event);
+};
+</script>
+</body>
+</html>

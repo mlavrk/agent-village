@@ -1,0 +1,11 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="720" height="96" viewBox="0 0 720 96" role="img" aria-label="night, dawn, day, vote loop">
+<style>text{font:13px -apple-system,BlinkMacSystemFont,"Segoe UI",sans-serif}@media (prefers-color-scheme:dark){.b{fill:#171b21;stroke:#39424f}.t{fill:#e6e9ee}.d{fill:#8c95a3}.a{stroke:#8c95a3}}@media (prefers-color-scheme:light){.b{fill:#f4f5f7;stroke:#c9cfd8}.t{fill:#1b1f26}.d{fill:#69727f}.a{stroke:#69727f}}</style>
+<g>
+<rect class="b" x="8" y="26" width="128" height="40" rx="8" stroke-width="1"/><text class="t" x="72" y="51" text-anchor="middle">🌙 night</text>
+<rect class="b" x="176" y="26" width="128" height="40" rx="8" stroke-width="1"/><text class="t" x="240" y="51" text-anchor="middle">🌅 dawn</text>
+<rect class="b" x="344" y="26" width="128" height="40" rx="8" stroke-width="1"/><text class="t" x="408" y="51" text-anchor="middle">☀️ discussion</text>
+<rect class="b" x="512" y="26" width="128" height="40" rx="8" stroke-width="1"/><text class="t" x="576" y="51" text-anchor="middle">⚖️ vote</text>
+<path class="a" d="M136 46h32M304 46h32M472 46h32" stroke-width="1.5" fill="none"/>
+<path class="a" d="M640 46h40a12 12 0 0 1 12 12v18a12 12 0 0 1-12 12H28a12 12 0 0 1-12-12v-4" stroke-width="1.5" fill="none" stroke-dasharray="4 3"/>
+<text class="d" x="360" y="92" text-anchor="middle">win check after every death</text>
+</g></svg>
