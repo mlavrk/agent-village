@@ -29,7 +29,7 @@ DEFAULT_POOL = PAID_POOL
 # Reasoning models spend part of the budget thinking and may never reach the
 # answer. This is the floor for max_tokens below which asking them is pointless.
 TOKEN_FLOOR = {
-    "glm-5.3-flash": 700,
+    "glm-5.3-flash": 1000,
 }
 
 

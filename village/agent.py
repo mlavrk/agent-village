@@ -1,6 +1,7 @@
 """A villager: role, memory, prompt assembly, decision as strict JSON."""
 from __future__ import annotations
 
+import re
 from dataclasses import dataclass, field
 
 from .bus import Message, MessageBus
@@ -124,7 +125,7 @@ class Agent:
         data = parse_json(raw)
         say = data.get("say")
         target = data.get("target")
-        if isinstance(say, str) and say.strip().lower() in {"", "null", "none", "pass"}:
+        if isinstance(say, str) and _is_silence(say):
             say = None
         if isinstance(target, str):
             target = target.strip().strip(".,!?\"'")
@@ -137,6 +138,14 @@ class Agent:
             raw=raw,
             partial=bool(data.get("_partial")),
         )
+
+
+def _is_silence(say: str) -> bool:
+    """Models sometimes "speak" a bare ellipsis or a dash — that is silence."""
+    stripped = say.strip().lower()
+    if stripped in {"", "null", "none", "pass", "(silence)", "silence"}:
+        return True
+    return bool(re.fullmatch(r"[.\-—–_*\s…]+", stripped))
 
 
 def match_name(candidate: str | None, alive: list[str]) -> str | None:
