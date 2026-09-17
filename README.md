@@ -7,7 +7,12 @@ It is deliberately small — no framework, no orchestration library — so that 
 interesting parts stay visible: who can see which messages, who speaks when, and
 what happens when a model ignores the format you asked for.
 
-![phases](docs/phases.svg)
+![The dashboard during a game](docs/webui.png)
+
+*Day 2. Left: who is alive, which model runs them, tokens spent. Middle: the
+public square, each line followed by the agent's private thought. Right: the
+mafia's own channel and the night's actions. Roles are hidden until someone
+dies — the toggle in the corner is for debugging.*
 
 ## Quick start
 
@@ -48,6 +53,8 @@ Any OpenAI-compatible endpoint works too, so a local model needs no key at all:
 | `--seed N` | reproducible role deal and speaking order |
 
 ## How it works
+
+![Phase loop](docs/phases.svg)
 
 | File | Role |
 |---|---|
