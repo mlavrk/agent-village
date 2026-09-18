@@ -148,15 +148,32 @@ def _is_silence(say: str) -> bool:
     return bool(re.fullmatch(r"[.\-—–_*\s…]+", stripped))
 
 
+_MIN_FRAGMENT = 3  # shorter than this, a "name fragment" is just noise
+
+
 def match_name(candidate: str | None, alive: list[str]) -> str | None:
-    """Models fumble case or add extra words — match loosely."""
+    """Models fumble case, add punctuation or bury the name in a sentence."""
     if not candidate:
         return None
-    lowered = candidate.lower()
+    lowered = candidate.strip().lower()
+    if not lowered:
+        return None
     for name in alive:
         if name.lower() == lowered:
             return name
+    # a name spoken inside a sentence: the FIRST one named wins, not whoever
+    # happens to sit earliest in the seating order
+    best: tuple[int, str] | None = None
     for name in alive:
-        if name.lower() in lowered or lowered in name.lower():
-            return name
+        found = re.search(rf"\b{re.escape(name.lower())}\b", lowered)
+        if found and (best is None or found.start() < best[0]):
+            best = (found.start(), name)
+    if best:
+        return best[1]
+    # a name cut short ("Marth") — but only when it is long enough to be a
+    # fragment of a name rather than a stray letter
+    if len(lowered) >= _MIN_FRAGMENT:
+        for name in alive:
+            if name.lower().startswith(lowered):
+                return name
     return None

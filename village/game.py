@@ -137,6 +137,10 @@ class MafiaGame:
 
     # --- phases ----------------------------------------------------
     def setup(self) -> None:
+        if self.config.players not in ROLE_PLAN:
+            raise ValueError(
+                f"players must be one of {sorted(ROLE_PLAN)}, got {self.config.players}"
+            )
         cast = CAST[: self.config.players]
         roles = ROLE_PLAN[self.config.players][:]
         self.rng.shuffle(roles)
@@ -222,6 +226,10 @@ class MafiaGame:
         options = [n for n in self.alive_names if n != self.last_healed]
         if self.self_heals >= 1:  # yourself: only once per game
             options = [n for n in options if n != doctor.name]
+        if not options:
+            # late game, everyone left is banned by one rule or the other:
+            # the bans relax rather than leaving the doctor with no move
+            options = self.alive_names[:]
         decision = await self._ask(
             doctor,
             f"Who do you save tonight? Name in 'target', chosen from: {', '.join(options)}. "
