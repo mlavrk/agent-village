@@ -114,11 +114,34 @@ Things that turned out to matter more than the rules themselves:
 
 ## Tests
 
+No framework — each file is a script that asserts and prints `OK`.
+
 ```bash
-.venv/bin/python tests/test_parsing.py   # malformed and truncated JSON
-.venv/bin/python tests/test_doctor.py    # self-heal limit
-.venv/bin/python tests/test_vote.py      # tie -> run-off
+make test        # one line per file; on failure, the tail of its output
+make test-v      # the same, but show everything each file prints
 ```
+
+Starting a game:
+
+```bash
+make mock        # local stubs: no API key, no tokens spent
+make run         # real models, dashboard on http://127.0.0.1:8300
+make run ARGS="--players 8 --rounds 3 --port 8400"
+```
+
+`make` picks up `.venv/bin/python`; override it with `make test PYTHON=python3`.
+Without `make`, the files run on their own: `.venv/bin/python tests/test_vote.py`.
+
+| | |
+|---|---|
+| `test_parsing.py`  | malformed, fenced and truncated JSON |
+| `test_silence.py`  | an ellipsis is silence, a line starting with one is not |
+| `test_names.py`    | loose name matching: sentences, run-off pools, junk |
+| `test_doctor.py`   | self-heal limit, no repeat two nights running |
+| `test_vote.py`     | tie -> run-off |
+| `test_setup.py`    | table sizes, and the doctor always has a legal move |
+| `test_channels.py` | the mafia channel never reaches the town |
+| `test_endgame.py`  | every `check_end` branch and their precedence |
 
 ## Where this goes next
 
