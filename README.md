@@ -34,11 +34,9 @@ OPENCODE_API_KEY=sk-...
 
 A full game is roughly 50 calls and costs about **$0.01** on `deepseek-v4-flash`.
 
-Any OpenAI-compatible endpoint works too, so a local model needs no key at all:
-
-```bash
-.venv/bin/python run.py --base-url http://127.0.0.1:11434/v1 --model qwen3:8b
-```
+The endpoint is fixed to OpenCode Zen and cannot be overridden: the API key is
+issued for that host, and a custom endpoint is the easy way to leak it by
+accident. To run without a key — and without spending tokens — use `--mock`.
 
 ## Options
 
@@ -48,7 +46,6 @@ Any OpenAI-compatible endpoint works too, so a local model needs no key at all:
 | `--players 6\|7\|8` | cast size (default 6: 2 mafia, doctor, detective, 2 villagers) |
 | `--rounds N` | discussion rounds per day (default 2) |
 | `--model ID` | pin a model; repeat the flag to define your own pool |
-| `--base-url URL` | custom OpenAI-compatible endpoint |
 | `--budget N` | token cap for one game (default 200k) |
 | `--seed N` | reproducible role deal and speaking order |
 

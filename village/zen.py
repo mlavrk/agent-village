@@ -13,7 +13,7 @@ import httpx
 
 from .models import token_floor
 
-BASE_URL = os.environ.get("OPENCODE_BASE_URL", "https://opencode.ai/zen/v1")
+BASE_URL = "https://opencode.ai/zen/v1"
 
 
 class FatalAPIError(RuntimeError):
@@ -61,19 +61,17 @@ class Usage:
 
 
 class ZenClient:
-    def __init__(self, usage: Usage, concurrency: int = 4, base_url: str | None = None) -> None:
-        base_url = base_url or BASE_URL
-        # a local server (ollama, lm studio) needs no key
-        local = "127.0.0.1" in base_url or "localhost" in base_url
+    def __init__(self, usage: Usage, concurrency: int = 4) -> None:
         self._client = httpx.AsyncClient(
-            base_url=base_url,
+            base_url=BASE_URL,
             headers={
-                "Authorization": f"Bearer {'local' if local else load_api_key()}",
+                "Authorization": f"Bearer {load_api_key()}",
                 "Content-Type": "application/json",
                 # the default python-httpx/* agent is easily filtered at the edge
                 "User-Agent": "agent-village/0.1",
             },
             timeout=httpx.Timeout(120.0),
+            follow_redirects=False,  # a 302 must never carry the key to another host
         )
         self._gate = asyncio.Semaphore(concurrency)
         self.usage = usage

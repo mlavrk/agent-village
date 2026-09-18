@@ -24,11 +24,6 @@ def main() -> None:
     parser.add_argument("--budget", type=int, default=200_000, help="token cap for one game")
     parser.add_argument("--port", type=int, default=8300)
     parser.add_argument(
-        "--base-url",
-        default=None,
-        help="your own OpenAI-compatible endpoint, e.g. http://127.0.0.1:11434/v1",
-    )
-    parser.add_argument(
         "--model",
         action="append",
         help="a Zen model; repeat the flag to define your own pool. "
@@ -45,7 +40,7 @@ def main() -> None:
     else:
         from village.zen import ZenClient
 
-        client = ZenClient(usage, base_url=args.base_url)
+        client = ZenClient(usage)
 
     config = GameConfig(
         players=args.players,
